@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] == '') {
-    header('Location: ../login.html');
+    header('Location: ../actions/auth/logout.php');
     exit;
 }
 require_once '../config/db.php';

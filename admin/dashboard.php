@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] == '') {
-    header('Location: ../login.html');
+    header('Location: ../actions/auth/logout.php');
     exit;
 }
 require_once '../config/db.php';
@@ -188,23 +188,91 @@ $current_page = "dashboard.php";
 
         <!-- Stats -->
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-card-accent" style="background:linear-gradient(90deg,#10B981,#34D399)"></div><div class="stat-card-top"><div class="stat-icon-box" style="background:var(--success-bg)">🟢</div><span class="stat-change up">↑ 8%</span></div><div class="stat-value">8</div><div class="stat-label">Live Campaigns</div></div>
-            <div class="stat-card"><div class="stat-card-accent" style="background:linear-gradient(90deg,#F59E0B,#FBBF24)"></div><div class="stat-card-top"><div class="stat-icon-box" style="background:var(--warning-bg)">⏳</div><span class="stat-change up">+3 new</span></div><div class="stat-value">3</div><div class="stat-label">Pending for Review</div></div>
-            <div class="stat-card"><div class="stat-card-accent" style="background:linear-gradient(90deg,#EF4444,#F87171)"></div><div class="stat-card-top"><div class="stat-icon-box" style="background:var(--error-bg)">💝</div><span class="stat-change up">+5 new</span></div><div class="stat-value">5</div><div class="stat-label">Donations Pending</div></div>
-            <div class="stat-card"><div class="stat-card-accent" style="background:linear-gradient(90deg,#3B82F6,#60A5FA)"></div><div class="stat-card-top"><div class="stat-icon-box" style="background:var(--info-bg)">📊</div><span class="stat-change up">↑ 18%</span></div><div class="stat-value">156</div><div class="stat-label">Total Donations Done</div></div>
-            <div class="stat-card"><div class="stat-card-accent" style="background:linear-gradient(90deg,#F97316,#FB923C)"></div><div class="stat-card-top"><div class="stat-icon-box" style="background:var(--accent-bg)">💰</div><span class="stat-change up">↑ 24%</span></div><div class="stat-value">₹18.5L</div><div class="stat-label">Total Raised Amount</div></div>
+            <div class="stat-card">
+                <div class="stat-card-accent" style="background:linear-gradient(90deg,#10B981,#34D399)"></div>
+                <div class="stat-card-top"><div class="stat-icon-box" style="background:var(--success-bg)">🟢</div>
+                <span class="stat-change up">↑ 8%</span>
+            </div>
+            <div class="stat-value">8</div>
+                <div class="stat-label">Live Campaigns</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-accent" style="background:linear-gradient(90deg,#F59E0B,#FBBF24)"></div>
+                <div class="stat-card-top"><div class="stat-icon-box" style="background:var(--warning-bg)">⏳</div>
+                <!-- <span class="stat-change up">+3 new</span> -->
+            </div>
+            <div class="stat-value">3</div>
+                <div class="stat-label">Pending for Review</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-accent" style="background:linear-gradient(90deg,#EF4444,#F87171)"></div>
+                <div class="stat-card-top"><div class="stat-icon-box" style="background:var(--error-bg)">💝</div>
+                <!-- <span class="stat-change up">+5 new</span> -->
+            </div>
+            <div class="stat-value">5</div>
+            <div class="stat-label">Donations Pending</div>
+        </div>
+            <div class="stat-card">
+                <div class="stat-card-accent" style="background:linear-gradient(90deg,#3B82F6,#60A5FA)"></div>
+                <div class="stat-card-top"><div class="stat-icon-box" style="background:var(--info-bg)">📊</div>
+                <!-- <span class="stat-change up">↑ 18%</span> -->
+            </div>
+            <div class="stat-value">156</div>
+            <div class="stat-label">Total Donations Done</div>
+        </div>
+            <div class="stat-card">
+                <div class="stat-card-accent" style="background:linear-gradient(90deg,#F97316,#FB923C)"></div>
+                <div class="stat-card-top"><div class="stat-icon-box" style="background:var(--accent-bg)">💰</div>
+                <!-- <span class="stat-change up">↑ 24%</span> -->
+            </div><div class="stat-value">₹18.5L</div>
+            <div class="stat-label">Total Raised Amount</div>
+        </div>
         </div>
 
         <div class="content-grid">
             <!-- Recent Fundraise Requests -->
             <div class="table-card">
-                <div class="table-card-header"><h3><span>📋</span> Recent Fundraise Requests</h3><a href="admin-fundraise-requests.html" class="view-all-link">View All <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></a></div>
-                <div class="table-wrap"><table class="admin-table fr-table"><thead><tr><th>S.No.</th><th>Campaign</th><th>Organizer</th><th>Category</th><th>Goal</th><th>Timeline</th><th>Status</th><th>Action</th></tr></thead><tbody id="frBody"></tbody></table></div>
+                <div class="table-card-header">
+                    <h3><span>📋</span> Recent Fundraise Requests</h3>
+                    <!-- <a href="admin-fundraise-requests.html" class="view-all-link">
+                        View All 
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a> -->
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table fr-table">
+                        <thead>
+                            <tr>
+                                <th>S.No.</th>
+                                <th>Campaign</th>
+                                <th>Organizer</th>
+                                <th>Category</th>
+                                <th>Goal</th>
+                                <th>Timeline</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="frBody">
+
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Recent Donations -->
             <div class="table-card">
-                <div class="table-card-header"><h3><span>💝</span> Recent Donations</h3><a href="admin-donation-requests.html" class="view-all-link">View All <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></a></div>
+                <div class="table-card-header">
+                    <h3><span>💝</span> Recent Donations</h3>
+                    <!-- <a href="admin-donation-requests.html" class="view-all-link">
+                        View All 
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a> -->
+                </div>
                 <div class="table-wrap"><table class="admin-table dn-table"><thead><tr><th>S.No.</th><th>Date</th><th>Donor</th><th>Phone</th><th>Email</th><th>Campaign</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody id="dnBody"></tbody></table></div>
             </div>
         </div>
@@ -316,7 +384,7 @@ $current_page = "dashboard.php";
                 </td>
                 <td>
                     <div class="action-group">
-                        <a href="admin-request-view.php?id=${r.id}" class="btn-view" title="View Details">
+                        <a href="../campaign.php?id=${r.id}" target="_blank" class="btn-view" title="View Details">
                             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             View
                         </a>
@@ -336,22 +404,38 @@ $current_page = "dashboard.php";
             return;
         }
 
-        body.innerHTML = dnData.map((d, i) => `
+        // Define status options for donations
+        const dnStatusOpts = ['pending', 'contacted', 'confirmed', 'cancelled'];
+
+        body.innerHTML = dnData.map((d, i) => {
+            // Generate dropdown options
+            const opts = dnStatusOpts.map(s => `<option value="${s}" ${d.status === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('');
+            
+            return `
             <tr>
                 <td class="sno">${i + 1}</td>
                 <td class="table-date">${new Date(d.created_at).toLocaleDateString('en-IN')}</td>
                 <td class="table-donor-name">${d.donor}</td>
                 <td class="table-phone">${d.phone || '—'}</td>
                 <td class="table-email">${d.email}</td>
-                <td><div class="table-campaign">${d.campaign_title}</div></td>
+                <td>
+                    <a href="../campaign.php?id=${d.campaign_id}" target="_blank" class="table-campaign" style="color: var(--accent); font-weight: 600; text-decoration: underline;">
+                        ${d.campaign_title}
+                    </a>
+                </td>
                 <td class="table-don-amount">₹${parseFloat(d.amount).toLocaleString('en-IN')}</td>
-                <td><span class="status-badge live"><span class="status-dot"></span>Confirmed</span></td>
+                <td>
+                    <select class="status-select ${d.status}" onchange="updateStatus(${d.id}, 'donation', this)">
+                        ${opts}
+                    </select>
+                </td>
                 <td>
                     <button class="btn-trash" onclick="deleteItem(${d.id}, 'donation')" title="Remove Entry">
                         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </td>
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
     }
 
     // --- 3. ACTIONS ---
