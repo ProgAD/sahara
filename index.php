@@ -674,7 +674,7 @@ $current_page = "index.php";
 
         .workflow-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr); 
             gap: 1.5rem;
             position: relative;
         }
@@ -682,11 +682,11 @@ $current_page = "index.php";
         .workflow-line {
             position: absolute;
             top: 72px;
-            left: 12.5%;
-            right: 12.5%;
+            left: 16%;  /* Adjusted for 3 columns */
+            right: 16%; /* Adjusted for 3 columns */
             height: 3px;
             background: linear-gradient(90deg, var(--peach), var(--sun), var(--peach));
-            border-radius: 10px;
+            border-radius: 100px;
             z-index: 0;
         }
 
@@ -1109,10 +1109,9 @@ $current_page = "index.php";
         /* Responsive Design */
         @media (max-width: 1200px) {
             .workflow-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 3rem 2rem;
+                grid-template-columns: 1fr; /* Stack vertically on small screens */
+                gap: 2.5rem;
             }
-
             .workflow-line {
                 display: none;
             }
@@ -1284,7 +1283,7 @@ $current_page = "index.php";
             </div>
             <div class="campaigns-grid" id="campaignsGrid"></div>
             <div class="campaigns-more">
-                <a href="campaigns.html" class="btn btn-ghost">View All Campaigns</a>
+                <a href="all-campaigns.php" class="btn btn-ghost">View All Campaigns</a>
             </div>
         </div>
     </section>
@@ -1298,21 +1297,13 @@ $current_page = "index.php";
                     Start a Fundraiser
                 </span>
                 <h2>How It Works</h2>
-                <p>Launch your fundraising campaign in 4 simple steps</p>
+                <p>Launch your fundraising campaign in 3 simple steps</p>
             </div>
             <div class="workflow-grid">
                 <div class="workflow-line"></div>
                 <div class="workflow-step">
                     <div class="step-icon">
                         <span class="step-num">1</span>
-                        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-                    </div>
-                    <h3>Create Account</h3>
-                    <p>Sign up with your IIT M BS email and verify your identity</p>
-                </div>
-                <div class="workflow-step">
-                    <div class="step-icon">
-                        <span class="step-num">2</span>
                         <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                     </div>
                     <h3>Submit Request</h3>
@@ -1320,7 +1311,7 @@ $current_page = "index.php";
                 </div>
                 <div class="workflow-step">
                     <div class="step-icon">
-                        <span class="step-num">3</span>
+                        <span class="step-num">2</span>
                         <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
                     </div>
                     <h3>Admin Review</h3>
@@ -1328,7 +1319,7 @@ $current_page = "index.php";
                 </div>
                 <div class="workflow-step">
                     <div class="step-icon">
-                        <span class="step-num">4</span>
+                        <span class="step-num">3</span>
                         <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
                     </div>
                     <h3>Get Support</h3>
@@ -1339,11 +1330,10 @@ $current_page = "index.php";
                 <h3>Ready to Make a Difference?</h3>
                 <p>Start your fundraising journey today. Our team is here to support you every step of the way.</p>
                 <div class="workflow-cta-btns">
-                    <a href="#" class="btn btn-sun">
-                        Create Free Account
+                    <a href="fundraise-request.php" class="btn btn-sun">
+                        Create Campaign Now
                         <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3"/></svg>
                     </a>
-                    <a href="#" class="btn btn-ghost">Learn More</a>
                 </div>
             </div>
         </div>
@@ -1428,94 +1418,112 @@ $current_page = "index.php";
     <?php include 'includes/footer.php'; ?>
 
     <script>
-        // Campaign Data
-        const campaigns = [
-            { id: 1, title: "Education Support for Rural Students", desc: "Help underprivileged students access quality education materials and online resources.", category: "Education", raised: 125000, goal: 200000, donors: 189, urgent: false, img: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500" },
-            { id: 2, title: "Medical Emergency – Rahul's Surgery", desc: "Rahul needs urgent spinal surgery. Help us raise funds for his treatment and recovery.", category: "Medical", raised: 420000, goal: 500000, donors: 312, urgent: true, img: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=500" },
-            { id: 3, title: "Laptop Fund for Merit Students", desc: "Providing laptops to academically excellent students who cannot afford devices.", category: "Education", raised: 180000, goal: 300000, donors: 167, urgent: false, img: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500" },
-            { id: 4, title: "Mental Health Support Initiative", desc: "Funding counseling sessions and mental health resources for students.", category: "Health", raised: 78000, goal: 120000, donors: 98, urgent: false, img: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=500" },
-            { id: 5, title: "Flood Relief – Kerala Students", desc: "Emergency support for BS students affected by floods in Kerala.", category: "Disaster", raised: 340000, goal: 400000, donors: 423, urgent: true, img: "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=500" },
-            { id: 6, title: "Community Library Project", desc: "Building a community library with study spaces and internet access.", category: "Community", raised: 65000, goal: 250000, donors: 87, urgent: false, img: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=500" }
-        ];
-
-        // Render Campaigns
-        function renderCampaigns() {
+        // --- 1. DYNAMIC CAMPAIGN LOADING ---
+        async function loadActiveCampaigns() {
             const grid = document.getElementById('campaignsGrid');
-            grid.innerHTML = campaigns.map(c => {
-                const pct = Math.round((c.raised / c.goal) * 100);
-                return `
-                <article class="campaign-card">
-                    <div class="campaign-img">
-                        <img src="${c.img}" alt="${c.title}" loading="lazy">
-                        <span class="campaign-tag">${c.category}</span>
-                        ${c.urgent ? '<span class="campaign-urgent">Urgent</span>' : ''}
-                    </div>
-                    <div class="campaign-body">
-                        <h3 class="campaign-title">${c.title}</h3>
-                        <p class="campaign-desc">${c.desc}</p>
-                        <div class="campaign-progress">
-                            <div class="progress-track"><div class="progress-bar" style="width:${pct}%"></div></div>
-                            <div class="progress-info">
-                                <span class="progress-raised">₹${(c.raised/1000).toFixed(0)}K</span>
-                                <span class="progress-goal">of ₹${(c.goal/1000).toFixed(0)}K</span>
-                            </div>
+            
+            try {
+                const response = await fetch('actions/campaigns/fetch_active.php');
+                const campaigns = await response.json();
+                
+                if (!campaigns || campaigns.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem;">
+                            <p style="color: var(--stone-light); font-size: 1.1rem;">No active campaigns found at the moment.</p>
+                        </div>`;
+                    return;
+                }
+
+                grid.innerHTML = campaigns.map(c => {
+                    const raised = parseFloat(c.raised || 0);
+                    const goal = parseFloat(c.amount_needed || 0);
+                    const pct = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
+                    const isUrgent = c.urgency === 'high' || c.urgency === 'critical';
+
+                    return `
+                    <article class="campaign-card">
+                        <div class="campaign-img">
+                            <img src="${c.img}" alt="${c.title}" loading="lazy">
+                            <span class="campaign-tag">${c.category}</span>
+                            ${isUrgent ? '<span class="campaign-urgent">Urgent</span>' : ''}
                         </div>
-                        <div class="campaign-footer">
-                            <div class="donors">
-                                <div class="donor-avatars">
-                                    <div class="donor-avatar">A</div>
-                                    <div class="donor-avatar">S</div>
-                                    <div class="donor-avatar">P</div>
+                        <div class="campaign-body">
+                            <h3 class="campaign-title">${c.title}</h3>
+                            <p class="campaign-desc">${c.description}</p>
+                            <div class="campaign-progress">
+                                <div class="progress-track"><div class="progress-bar" style="width:${pct}%"></div></div>
+                                <div class="progress-info">
+                                    <span class="progress-raised">₹${raised.toLocaleString('en-IN')}</span>
+                                    <span class="progress-goal">of ₹${goal.toLocaleString('en-IN')}</span>
                                 </div>
-                                <span class="donor-count">${c.donors} donors</span>
                             </div>
-                            <button class="btn btn-sun btn-donate" onclick="donate(${c.id})">Donate</button>
+                            <div class="campaign-footer">
+                                <div class="donors">
+                                    <span class="donor-count">${c.donor_count || 0} donors</span>
+                                </div>
+                                <a href="campaign-details.php?id=${c.id}" class="btn btn-sun btn-donate">Donate</a>
+                            </div>
                         </div>
-                    </div>
-                </article>`;
-            }).join('');
+                    </article>`;
+                }).join('');
+
+            } catch (error) {
+                console.error("Error loading campaigns:", error);
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color: var(--error);">Unable to load campaigns. Please try again later.</p>`;
+            }
         }
 
-        // Donate
-        function donate(id) {
-            alert(`Redirecting to secure payment for Campaign #${id}\n\n(Integrates with Razorpay/PayU in production)`);
+        // --- 2. HEADER & NAVIGATION UI ---
+        function initNavigation() {
+            const menuToggle = document.getElementById('menuToggle');
+            const mobileNav = document.getElementById('mobileNav');
+            const header = document.getElementById('header');
+
+            // Mobile Menu Toggle
+            if (menuToggle && mobileNav) {
+                menuToggle.addEventListener('click', () => {
+                    menuToggle.classList.toggle('active');
+                    mobileNav.classList.toggle('active');
+                    document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+                });
+
+                // Close menu on link click
+                document.querySelectorAll('[data-close]').forEach(link => {
+                    link.addEventListener('click', () => {
+                        menuToggle.classList.remove('active');
+                        mobileNav.classList.remove('active');
+                        document.body.style.overflow = '';
+                    });
+                });
+            }
+
+            // Header Scroll Effect
+            window.addEventListener('scroll', () => {
+                if (header) {
+                    header.classList.toggle('scrolled', window.scrollY > 50);
+                }
+            });
+
+            // Smooth Scroll for Anchors
+            document.querySelectorAll('a[href^="#"]').forEach(a => {
+                a.addEventListener('click', e => {
+                    const targetId = a.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    e.preventDefault();
+                    const target = document.querySelector(targetId);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
         }
 
-        // Mobile Menu
-        const menuToggle = document.getElementById('menuToggle');
-        const mobileNav = document.getElementById('mobileNav');
-
-        menuToggle.addEventListener('click', () => {
-            menuToggle.classList.toggle('active');
-            mobileNav.classList.toggle('active');
-            document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+        // --- 3. INITIALIZE ON LOAD ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initNavigation();
+            loadActiveCampaigns();
         });
-
-        document.querySelectorAll('[data-close]').forEach(link => {
-            link.addEventListener('click', () => {
-                menuToggle.classList.remove('active');
-                mobileNav.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        });
-
-        // Header Scroll
-        const header = document.getElementById('header');
-        window.addEventListener('scroll', () => {
-            header.classList.toggle('scrolled', window.scrollY > 50);
-        });
-
-        // Smooth Scroll
-        document.querySelectorAll('a[href^="#"]').forEach(a => {
-            a.addEventListener('click', e => {
-                e.preventDefault();
-                const target = document.querySelector(a.getAttribute('href'));
-                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        });
-
-        // Init
-        renderCampaigns();
     </script>
 </body>
 </html>
