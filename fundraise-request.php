@@ -765,18 +765,31 @@ $current_page = "fundraise-request.php";
     });
 
     verifyBtn.addEventListener('click', async () => {
+        const emailValue = emailInput.value.trim();
+        if (!emailValue) return;
+
         verifyBtn.classList.add('verifying');
         verifyBtn.innerHTML = '<span>Checking...</span>';
 
         const formData = new FormData();
         formData.append('action', 'check_email');
-        formData.append('email', emailInput.value.trim());
+        formData.append('email', emailValue);
 
         try {
             const res = await fetch('actions/campaigns/request_action.php', { method: 'POST', body: formData });
             const data = await res.json();
 
             verifyBtn.classList.remove('verifying');
+
+            if (data.status === 'error') {
+                // This is the ADMIN BLOCK trigger
+                alert(data.message); // You can replace this with a nice Toast if you have a function for it
+                verifyBtn.innerHTML = 'Verify';
+                emailInput.value = '';
+                return;
+            }
+
+            // Proceed if email is not an admin
             verifyBtn.classList.add('verified');
             verifyBtn.textContent = '✓ Verified';
             emailVerified = true;
