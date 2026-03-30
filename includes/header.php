@@ -247,7 +247,11 @@
                     </ul>
                     <div class="nav-cta">
                         <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != '') { ?>
-                        <a href="dashboard.php" class="btn btn-ghost" style="border-color: var(--sun); color: var(--sun);">Dashboard</a>
+                            <?php if (isset($_SESSION['role']) && $_SESSION['role'] == "user") { ?>
+                                <a href="dashboard.php" class="btn btn-ghost" style="border-color: var(--sun); color: var(--sun);">Dashboard</a>
+                            <?php } else if (isset($_SESSION['role']) && $_SESSION['role'] == "admin") { ?>
+                                <a href="admin/dashboard.php" class="btn btn-ghost" style="border-color: var(--sun); color: var(--sun);">Admin Panel</a>
+                        <?php } ?>
                         <a href="actions/auth/logout.php" class="btn btn-sun" onclick="alert('Logging out...')">Logout</a>
                         <?php } else { ?>
                         <a href="login.html" class="btn btn-ghost">Log in</a>
@@ -275,7 +279,11 @@
             </ul>
             <div class="mobile-nav-cta">
                 <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != '') { ?>
+                <?php if (isset($_SESSION['role']) && $_SESSION['role'] == "user") { ?>
                 <a href="dashboard.php" class="btn btn-ghost">Dashboard</a>
+                <?php } else if (isset($_SESSION['role']) && $_SESSION['role'] == "admin") { ?>
+                <a href="admin/dashboard.php" class="btn btn-ghost">Admin Panel</a>
+                <?php } ?>
                 <a href="actions/auth/logout.php" class="btn btn-sun">Logout</a>
                 <?php } else { ?>
                 <a href="login.html" class="btn btn-ghost">Log in</a>

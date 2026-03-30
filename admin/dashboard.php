@@ -136,7 +136,11 @@ $current_page = "dashboard.php";
         .status-select.cancelled{background-color:var(--error-bg);color:#991B1B;border-color:#FCA5A5}
 
         /* Action */
-        .action-group{display:flex;align-items:center;gap:.4rem}
+        .action-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
         .btn-view{padding:.35rem .75rem;font-size:.72rem;font-weight:600;font-family:'Outfit',sans-serif;border-radius:8px;cursor:pointer;transition:all .25s var(--ease-out);border:1.5px solid var(--card-border);background:white;color:var(--text-primary);display:inline-flex;align-items:center;gap:.3rem;text-decoration:none}.btn-view svg{width:13px;height:13px}.btn-view:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
         .btn-trash{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--card-border);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s var(--ease-out)}.btn-trash svg{width:14px;height:14px;color:var(--text-muted)}.btn-trash:hover{border-color:var(--error);background:var(--error-bg)}.btn-trash:hover svg{color:var(--error)}
 
@@ -180,7 +184,7 @@ $current_page = "dashboard.php";
     <div class="toast" id="toast"><span id="toastText"></span></div>
 
     <div class="main-content">
-        <div class="page-header"><div><h1>Dashboard</h1><p>Overview of campaigns, donations, and platform activity</p></div><div class="header-actions"><div class="date-display"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span id="currentDate"></span></div><a href="index.html" class="btn-admin btn-outline"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>View Site</a></div></div>
+        <div class="page-header"><div><h1>Dashboard</h1><p>Overview of campaigns, donations, and platform activity</p></div><div class="header-actions"><div class="date-display"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span id="currentDate"></span></div><a href="../index.php" target="_blank" class="btn-admin btn-outline"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>View Site</a></div></div>
 
         <!-- Stats -->
         <div class="stats-grid">
@@ -206,7 +210,7 @@ $current_page = "dashboard.php";
         </div>
 
         <!-- Activity -->
-        <div class="activity-section"><div class="activity-card"><div class="table-card-header"><h3><span>🔔</span> Recent Activity</h3><a href="#" class="view-all-link">View All <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></a></div><div id="activityTimeline"></div></div></div>
+        <div class="activity-section" style="display: none;"><div class="activity-card"><div class="table-card-header"><h3><span>🔔</span> Recent Activity</h3><a href="#" class="view-all-link">View All <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></a></div><div id="activityTimeline"></div></div></div>
     </div>
 
     <script>
@@ -299,7 +303,7 @@ $current_page = "dashboard.php";
                 <td class="sno">${i + 1}</td>
                 <td>
                     <div class="table-campaign-title">${r.title}</div>
-                    <div class="table-campaign-id">#${r.id}</div>
+                    <div class="table-campaign-id">#CAM-${r.id}</div>
                 </td>
                 <td class="table-organizer">${r.organizer}</td>
                 <td><span class="table-category">${catIcons[r.category] || '📋'} ${r.category}</span></td>
@@ -312,6 +316,10 @@ $current_page = "dashboard.php";
                 </td>
                 <td>
                     <div class="action-group">
+                        <a href="admin-request-view.php?id=${r.id}" class="btn-view" title="View Details">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            View
+                        </a>
                         <button class="btn-trash" onclick="deleteItem(${r.id}, 'campaign')" title="Delete">
                             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         </button>
