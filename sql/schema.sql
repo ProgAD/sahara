@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS donations (
     campaign_id         INT             NOT NULL,
     user_id             INT             NOT NULL,
     amount              DECIMAL(12,2)   NOT NULL DEFAULT 0,
+    status              ENUM('pending','contacted','confirmed','cancelled') NOT NULL DEFAULT 'pending',
     created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 

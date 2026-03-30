@@ -7,6 +7,67 @@ $user_phone = $_SESSION['phone'] ?? null;
 $role = $_SESSION['role'] ?? null;
 
 $current_page = "campaign.php";
+
+require_once 'config/db.php';
+
+// 1. Get ID and redirect if missing
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($id <= 0) {
+    header('Location: all-campaigns.php');
+    exit;
+}
+
+// 2. Fetch Campaign Data with Organizer info
+$query = "SELECT c.*, u.name as organizer_name, u.role as organizer_role, u.created_at as organizer_since 
+          FROM campaigns c 
+          JOIN users u ON c.user_id = u.id 
+          WHERE c.id = ? AND c.delete_flag = 0 AND c.status != 'pending' LIMIT 1";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$campaign = $stmt->get_result()->fetch_assoc();
+
+// 3. Handle "Not Found"
+if (!$campaign) {
+    echo "<div style='text-align:center; padding:100px; font-family:sans-serif;'><h1>Campaign Not Found</h1><a href='all-campaigns.php'>Back to Campaigns</a></div>";
+    exit;
+}
+
+
+// campaign variables 
+$campaign_name = $campaign['name'];
+$campaign_description = $campaign['description'];
+$campaign_amount_needed = $campaign['amount_needed'];
+$campaign_status = $campaign['status'];
+$campaign_created_at = $campaign['created_at'];
+$campaign_organizer_name = $campaign['organizer_name'];
+$campaign_organizer_role = $campaign['organizer_role'];
+$campaign_organizer_since = $campaign['organizer_since'];
+
+// 4. Fetch Donations and Donor Info
+$donations_query = "SELECT d.amount, d.created_at, u.name as donor_name 
+                   FROM donations d 
+                   JOIN users u ON d.user_id = u.id 
+                   WHERE d.campaign_id = ? 
+                   ORDER BY d.created_at DESC";
+$stmt_don = $conn->prepare($donations_query);
+$stmt_don->bind_param("i", $id);
+$stmt_don->execute();
+$donations_res = $stmt_don->get_result();
+$donations = $donations_res->fetch_all(MYSQLI_ASSOC);
+
+// 5. Calculations
+$total_raised = 0;
+foreach($donations as $don) { $total_raised += $don['amount']; }
+$goal = $campaign['amount_needed'];
+$remaining = $goal - $total_raised;
+$donor_count = count($donations);
+$is_completed = ($total_raised >= $goal || $campaign['status'] == 'completed');
+
+// 6. Media Fetch
+$media_path = "assets/campaigns/media/" . $id . "/";
+$media_files = is_dir($media_path) ? array_diff(scandir($media_path), array('.', '..')) : [];
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -612,9 +673,14 @@ $current_page = "campaign.php";
             <div class="container">
                 <div class="campaign-hero-content">
                     <div class="campaign-badges">
-                        <span class="badge campaign-id" id="campaignIdBadge">ID: SAH-2026-002</span>
-                        <span class="badge category" id="categoryBadge">🏥 Medical</span>
-                        <span class="badge urgent" id="urgentBadge">🔥 Urgent</span>
+                        <span class="badge campaign-id">ID: #<?php echo $id; ?></span>
+                        <span class="badge category"><?php echo htmlspecialchars($campaign['category']); ?></span>
+                        <?php if($campaign['urgency'] == 'high'): ?>
+                            <span class="badge urgent">🔥 Urgent</span>
+                        <?php endif; ?>
+                        <?php if($is_completed): ?>
+                            <span class="badge completed">✓ Completed</span>
+                        <?php endif; ?>
                     </div>
                     <div class="campaign-hero-title">
                         <h1 id="campaignTitle">Medical Emergency – Rahul's Surgery</h1>
@@ -623,10 +689,10 @@ $current_page = "campaign.php";
                                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 <span>Started <span id="campaignDate">March 25, 2026</span></span>
                             </div>
-                            <div class="meta-item">
+                            <!-- <div class="meta-item">
                                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 <span><span id="daysLeft">5</span> days left</span>
-                            </div>
+                            </div> -->
                             <div class="meta-item">
                                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 <span id="campaignLocation">Chennai, Tamil Nadu</span>
@@ -660,9 +726,7 @@ $current_page = "campaign.php";
                     <div class="campaign-description">
                         <h3>About this Campaign</h3>
                         <div id="campaignDescription">
-                            <p>Rahul, a 22-year-old BS Data Science student at IIT Madras, met with a severe accident last month that left him with critical spinal injuries. The doctors have recommended an urgent surgery to prevent permanent paralysis.</p>
-                            <p>The estimated cost for the surgery and post-operative care is ₹5,00,000. Rahul's family, who are daily wage workers from a small village in Bihar, cannot afford this amount. Despite the hardship, Rahul has always been a brilliant student with dreams of becoming a data scientist.</p>
-                            <p>Your contribution, no matter how small, can help save Rahul's future. All funds raised will go directly towards his medical treatment, surgery, and rehabilitation. Let's come together as a community to support one of our own.</p>
+                            <?php echo nl2br(htmlspecialchars($campaign['description'])); ?>
                         </div>
 
                         <!-- Beneficiary Details -->
@@ -672,15 +736,15 @@ $current_page = "campaign.php";
                             </div>
                             <div class="beneficiary-info">
                                 <div class="beneficiary-label">Beneficiary Details</div>
-                                <div class="beneficiary-name" id="beneficiaryName">Rahul Kumar</div>
+                                <div class="beneficiary-name"><?php echo htmlspecialchars($campaign['beneficiary_name']); ?></div>
                                 <div class="beneficiary-details">
                                     <div class="beneficiary-detail">
-                                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                                        <span id="beneficiaryContact">+91 98765 43210</span>
+                                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        <span>Relation: <?php echo htmlspecialchars($campaign['beneficiary_relation']); ?></span>
                                     </div>
                                     <div class="beneficiary-detail">
-                                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        <span id="beneficiaryCity">Patna, Bihar</span>
+                                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                        <span><?php echo htmlspecialchars($campaign['beneficiary_phone']); ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -691,14 +755,13 @@ $current_page = "campaign.php";
                     <div class="organizer-section">
                         <h3>Campaign Organizer</h3>
                         <div class="organizer-card">
-                            <div class="organizer-avatar" id="organizerInitial">A</div>
+                            <div class="organizer-avatar">
+                                <?php echo strtoupper(substr($campaign['organizer_name'], 0, 1)); ?>
+                            </div>
                             <div class="organizer-info">
-                                <h4 id="organizerName">Ananya Sharma</h4>
-                                <p>BS Data Science, Batch 2024</p>
-                                <div class="verified-badge">
-                                    <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                    Verified Organizer
-                                </div>
+                                <h4><?php echo htmlspecialchars($campaign['organizer_name']); ?></h4>
+                                <p>Member since <?php echo date('M Y', strtotime($campaign['organizer_since'])); ?></p>
+                                <div class="verified-badge">✓ Verified Organizer</div>
                             </div>
                         </div>
                     </div>
@@ -720,69 +783,86 @@ $current_page = "campaign.php";
                     <div class="donation-card">
                         <div class="progress-section">
                             <div class="progress-amounts">
-                                <span class="raised-amount" id="raisedAmount">₹4,20,000</span>
-                                <span class="goal-amount">raised of <span id="goalAmount">₹5,00,000</span></span>
+                                <span class="raised-amount" id="raisedAmount">₹<?php echo number_format($total_raised); ?></span>
+                                <span class="goal-amount">raised of <span style="color: var(--sun); font-weight: bold; font-size: 1.1rem;">₹<?php echo number_format($goal); ?></span></span>
                             </div>
                             <div class="progress-bar-bg">
-                                <div class="progress-bar-fill" id="progressBar" style="width: 84%"></div>
+                                <?php $percent_val = $goal > 0 ? min(100, round(($total_raised / $goal) * 100)) : 0; ?>
+                                <div class="progress-bar-fill" id="progressBar" style="width: <?php echo $percent_val; ?>%"></div>
                             </div>
                             <div class="progress-stats">
                                 <div class="stat-item">
-                                    <div class="stat-value" id="donorCount">312</div>
+                                    <div class="stat-value" id="donorCount"><?php echo $donor_count; ?></div>
                                     <div class="stat-label">Donors</div>
                                 </div>
                                 <div class="stat-item">
-                                    <div class="stat-value" id="daysLeftStat">5</div>
-                                    <div class="stat-label">Days Left</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-value" id="percentFunded">84%</div>
+                                    <div class="stat-value" id="percentFunded"><?php echo $percent_val; ?>%</div>
                                     <div class="stat-label">Funded</div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="donation-amounts">
-                            <button class="amount-option" data-amount="500">₹500</button>
-                            <button class="amount-option" data-amount="1000">₹1,000</button>
-                            <button class="amount-option selected" data-amount="2000">₹2,000</button>
-                            <button class="amount-option" data-amount="5000">₹5,000</button>
-                            <button class="amount-option" data-amount="10000">₹10,000</button>
-                            <button class="amount-option" data-amount="25000">₹25,000</button>
-                        </div>
+                        <?php if (!$is_completed): ?>
+                            <div class="donation-amounts">
+                                <?php 
+                                    $presets = [500, 1000, 2000, 5000, 10000, 25000];
+                                    foreach($presets as $amt) {
+                                        // Only show preset if it's less than or equal to the remaining balance
+                                        if ($amt <= $remaining) {
+                                            echo "<button class='amount-option' data-amount='$amt'>₹".number_format($amt)."</button>";
+                                        }
+                                    }
+                                ?>
+                            </div>
 
-                        <div class="custom-amount">
-                            <label for="customAmount">Or enter custom amount</label>
-                            <div class="amount-input-wrapper">
-                                <span class="currency">₹</span>
-                                <input type="number" id="customAmount" class="amount-input" placeholder="Enter amount" min="100">
+                            <div class="custom-amount">
+                                <label for="customAmount">Or enter custom amount</label>
+                                <div class="amount-input-wrapper">
+                                    <span class="currency">₹</span>
+                                    <input type="number" id="customAmount" class="amount-input" placeholder="Min ₹100" min="100" max="<?php echo $remaining; ?>">
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Donor Info Form -->
-                        <div class="donor-form">
-                            <div class="donor-form-title">
-                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                Your Details <span style="color: var(--error); font-size: 0.75rem;">(Required)</span>
-                            </div>
-                            <div class="form-group">
-                                <input type="text" id="donorName" class="form-input" placeholder="Full Name" required>
-                                <div class="form-error" id="nameError">Please enter your name</div>
-                            </div>
-                            <div class="form-group">
-                                <input type="tel" id="donorPhone" class="form-input" placeholder="Phone Number" required>
-                                <div class="form-error" id="phoneError">Please enter a valid phone number</div>
-                            </div>
-                            <div class="form-group">
-                                <input type="email" id="donorEmail" class="form-input" placeholder="Email Address" required>
-                                <div class="form-error" id="emailError">Please enter a valid email address</div>
-                            </div>
-                        </div>
+                            <div class="donor-form">
+                                <div class="donor-form-title">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    Your Details
+                                </div>
+                                
+                                <div class="form-group" style="position: relative;">
+                                    <input type="email" id="donorEmail" class="form-input" placeholder="Email Address" 
+                                        value="<?php echo htmlspecialchars($user_email ?? ''); ?>" 
+                                        <?php echo !empty($user_email) ? 'disabled' : ''; ?> required>
+                                    <div class="form-error" id="emailError">Please enter a valid email</div>
+                                </div>
 
-                        <button class="btn btn-sun donate-btn" id="donateBtn">
-                            <span>Donate Now</span>
-                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                        </button>
+                                <div class="form-group">
+                                    <input type="text" id="donorName" class="form-input" placeholder="Full Name" 
+                                        value="<?php echo htmlspecialchars($user_name ?? ''); ?>" 
+                                        <?php echo !empty($user_name) ? 'disabled' : ''; ?> required>
+                                    <div class="form-error" id="nameError">Please enter your name</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <input type="tel" id="donorPhone" class="form-input" placeholder="Phone Number (10 digits)" 
+                                        value="<?php echo htmlspecialchars($user_phone ?? ''); ?>" 
+                                        <?php echo (!empty($user_phone)) ? 'disabled' : ''; ?> required>
+                                    <div class="form-error" id="phoneError">Please enter a 10-digit phone number</div>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-sun donate-btn" id="donateBtn">
+                                <span>Donate Now</span>
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            </button>
+
+                        <?php else: ?>
+                            <div style="text-align: center; padding: 1.5rem; background: var(--success-light); border-radius: var(--radius-md); border: 1px solid var(--success);">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎉</div>
+                                <h4 style="color: #065F46; font-family: var(--font-body); font-weight: 700;">Goal Reached!</h4>
+                                <p style="font-size: 0.85rem; color: #065F46; margin-top: 0.5rem;">This campaign has successfully raised its target amount. Thank you to all the donors!</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Share Section -->
@@ -820,7 +900,7 @@ $current_page = "campaign.php";
             <h2>Donation Request Received!</h2>
             <div class="modal-amount" id="modalAmount">₹2,000</div>
             <div class="modal-donor-info" id="modalDonorInfo">
-                <p><strong>Name:</strong> <span id="modalDonorName"></span></p>
+                <p><strong>Donation ID:</strong> <span id="modalDonationId" style="color: var(--sun); font-weight: bold;"></span></p> <p><strong>Name:</strong> <span id="modalDonorName"></span></p>
                 <p><strong>Phone:</strong> <span id="modalDonorPhone"></span></p>
                 <p><strong>Email:</strong> <span id="modalDonorEmail"></span></p>
                 <p><strong>Campaign ID:</strong> <span id="modalCampaignId"></span></p>
@@ -829,7 +909,7 @@ $current_page = "campaign.php";
                 <p>🙏 <strong>SAHARA team will reach out to you soon</strong> with payment details for your generous donation.</p>
             </div>
             <p>Thank you for supporting this campaign. Your kindness makes a difference!</p>
-            <button class="btn btn-sun modal-btn" id="closeModal">Got it!</button>
+            <button class="btn btn-sun modal-btn" id="closeModal" onclick="window.location.reload()">Got it!</button>
         </div>
     </div>
 
@@ -837,282 +917,221 @@ $current_page = "campaign.php";
     <?php include 'includes/footer.php'; ?>
 
     <script>
-        // Mobile Menu
-        const menuToggle = document.getElementById('menuToggle');
-        const mobileNav = document.getElementById('mobileNav');
+        // Add these to your goToSlide function or share functions
+        function shareTwitter() {
+            const text = encodeURIComponent(`Supporting ${document.getElementById('campaignTitle').innerText} on SAHARA!`);
+            window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(window.location.href)}`, '_blank');
+        }
 
-        menuToggle.addEventListener('click', () => {
-            menuToggle.classList.toggle('active');
-            mobileNav.classList.toggle('active');
-            document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
-        });
+        function shareFacebook() {
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+        }
 
-        document.querySelectorAll('[data-close]').forEach(link => {
-            link.addEventListener('click', () => {
-                menuToggle.classList.remove('active');
-                mobileNav.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        });
+        // Data from PHP
+        const mediaFiles = <?php echo json_encode(array_values($media_files)); ?>;
+        const campaignId = <?php echo $id; ?>;
+        const donors = <?php echo json_encode($donations); ?>;
 
-        // Header Scroll
-        const header = document.getElementById('header');
-        window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 50));
-
-        // Sample Campaign Data
-        const campaign = {
-            id: 2,
-            campaignId: "SAH-2026-002",
-            title: "Medical Emergency – Rahul's Surgery",
-            category: "Medical",
-            raised: 420000,
-            goal: 500000,
-            donors: 312,
-            urgent: true,
-            completed: false,
-            daysLeft: 5,
-            date: "2026-03-25",
-            location: "Chennai, Tamil Nadu",
-            organizer: { name: "Ananya Sharma", batch: "BS Data Science, Batch 2024" },
-            beneficiary: { name: "Rahul Kumar", contact: "+91 98765 43210", city: "Patna, Bihar" }
-        };
-
-        // Sample Media Data
-        const mediaItems = [
-            { type: 'image', src: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800', thumb: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200' },
-            { type: 'image', src: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800', thumb: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=200' },
-            { type: 'video', src: 'https://www.w3schools.com/html/mov_bbb.mp4', thumb: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=200' },
-            { type: 'image', src: 'https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=800', thumb: 'https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=200' },
-            { type: 'image', src: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800', thumb: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=200' }
-        ];
-
-        // Sample Donors Data
-        const donors = [
-            { name: "Priya Mehta", amount: 10000, time: "2 hours ago", anonymous: false },
-            { name: "Rahul Verma", amount: 5000, time: "5 hours ago", anonymous: false },
-            { name: "Anonymous", amount: 25000, time: "8 hours ago", anonymous: true },
-            { name: "Amit Singh", amount: 2000, time: "12 hours ago", anonymous: false },
-            { name: "Sneha Gupta", amount: 1000, time: "1 day ago", anonymous: false },
-            { name: "Anonymous", amount: 15000, time: "1 day ago", anonymous: true },
-            { name: "Vikram Patel", amount: 3000, time: "2 days ago", anonymous: false },
-            { name: "Neha Sharma", amount: 500, time: "2 days ago", anonymous: false },
-            { name: "Karthik R", amount: 7500, time: "3 days ago", anonymous: false },
-            { name: "Anonymous", amount: 50000, time: "3 days ago", anonymous: true }
-        ];
-
-        // Media Slider
-        let currentSlide = 0;
+        // 1. Media Logic
         const sliderTrack = document.getElementById('sliderTrack');
-        const sliderDots = document.getElementById('sliderDots');
         const thumbnails = document.getElementById('mediaThumbnails');
+        const mediaPath = `assets/campaigns/media/${campaignId}/`;
 
-        function renderMedia() {
-            sliderTrack.innerHTML = mediaItems.map((item, i) => `
-                <div class="media-slide">
-                    ${item.type === 'video' ? `<video src="${item.src}" controls></video>` : `<img src="${item.src}" alt="Campaign media ${i + 1}">`}
-                </div>
-            `).join('');
+        if (mediaFiles.length > 0) {
+            sliderTrack.innerHTML = mediaFiles.map(file => {
+                const isVideo = file.toLowerCase().endsWith('.mp4');
+                return `<div class="media-slide">
+                    ${isVideo ? `<video src="${mediaPath}${file}" controls></video>` : `<img src="${mediaPath}${file}">`}
+                </div>`;
+            }).join('');
 
-            sliderDots.innerHTML = mediaItems.map((_, i) => `<button class="slider-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></button>`).join('');
-
-            thumbnails.innerHTML = mediaItems.map((item, i) => `
-                <div class="media-thumb ${item.type === 'video' ? 'video-thumb' : ''} ${i === 0 ? 'active' : ''}" data-index="${i}">
-                    <img src="${item.thumb}" alt="Thumbnail ${i + 1}">
-                </div>
-            `).join('');
-
-            document.querySelectorAll('.slider-dot').forEach(dot => dot.addEventListener('click', () => goToSlide(parseInt(dot.dataset.index))));
-            document.querySelectorAll('.media-thumb').forEach(thumb => thumb.addEventListener('click', () => goToSlide(parseInt(thumb.dataset.index))));
+            thumbnails.innerHTML = mediaFiles.map((file, i) => `
+                <div class="media-thumb ${i === 0 ? 'active' : ''}" data-index="${i}">
+                    <img src="${mediaPath}${file}">
+                </div>`).join('');
         }
 
-        function goToSlide(index) {
-            currentSlide = index;
-            sliderTrack.style.transform = `translateX(-${index * 100}%)`;
-            document.querySelectorAll('.slider-dot').forEach((dot, i) => dot.classList.toggle('active', i === index));
-            document.querySelectorAll('.media-thumb').forEach((thumb, i) => thumb.classList.toggle('active', i === index));
-            document.querySelectorAll('.media-slide video').forEach((video, i) => { if (i !== index) video.pause(); });
-        }
-
-        document.getElementById('prevBtn').addEventListener('click', () => goToSlide(currentSlide === 0 ? mediaItems.length - 1 : currentSlide - 1));
-        document.getElementById('nextBtn').addEventListener('click', () => goToSlide(currentSlide === mediaItems.length - 1 ? 0 : currentSlide + 1));
-
-        let autoSlideInterval;
-        function startAutoSlide() { autoSlideInterval = setInterval(() => goToSlide(currentSlide === mediaItems.length - 1 ? 0 : currentSlide + 1), 5000); }
-        function stopAutoSlide() { clearInterval(autoSlideInterval); }
-
-        renderMedia();
-        startAutoSlide();
-
-        document.querySelector('.media-slider').addEventListener('mouseenter', stopAutoSlide);
-        document.querySelector('.media-slider').addEventListener('mouseleave', startAutoSlide);
-
-        // Render Donors
+        // 2. Donation List Rendering
         function renderDonors(showAll = false) {
-            const donorsList = document.getElementById('donorsList');
-            const displayDonors = showAll ? donors : donors.slice(0, 5);
-            donorsList.innerHTML = displayDonors.map(donor => `
+            const list = document.getElementById('donorsList');
+            const display = showAll ? donors : donors.slice(0, 5);
+            if (donors.length === 0) {
+                list.innerHTML = "<p>No donations yet. Be the first to support!</p>";
+                return;
+            }
+            list.innerHTML = display.map(d => `
                 <div class="donor-item">
-                    <div class="donor-avatar">${donor.anonymous ? '?' : donor.name.charAt(0)}</div>
+                    <div class="donor-avatar">${d.donor_name.charAt(0)}</div>
                     <div class="donor-info">
-                        <div class="donor-name">${donor.anonymous ? 'Anonymous Donor' : donor.name}</div>
-                        <div class="donor-time">${donor.time}</div>
+                        <div class="donor-name">${d.donor_name}</div>
+                        <div class="donor-time">${new Date(d.created_at).toLocaleDateString()}</div>
                     </div>
-                    <div class="donor-amount">₹${donor.amount.toLocaleString('en-IN')}</div>
-                </div>
-            `).join('');
+                    <div class="donor-amount">₹${parseFloat(d.amount).toLocaleString('en-IN')}</div>
+                </div>`).join('');
         }
-
         renderDonors();
 
-        let showingAllDonors = false;
-        document.getElementById('showMoreDonors').addEventListener('click', () => {
-            showingAllDonors = !showingAllDonors;
-            renderDonors(showingAllDonors);
-            document.getElementById('showMoreDonors').textContent = showingAllDonors ? 'Show Less' : 'Show All Donors';
+        // 3. Share Functionality
+        function shareWhatsApp() {
+            const text = encodeURIComponent(`Help support ${document.getElementById('campaignTitle').innerText} on SAHARA! ` + window.location.href);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
+        
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Link copied to clipboard!");
+        }
+
+        // 4. Amount Selection
+        document.querySelectorAll('.amount-option').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.amount-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                document.getElementById('customAmount').value = btn.dataset.amount;
+            };
         });
 
-        // Donation Amount Selection
-        const amountOptions = document.querySelectorAll('.amount-option');
-        const customAmountInput = document.getElementById('customAmount');
-        let selectedAmount = 2000;
+        // 5. Form Pre-fill
+        // --- DYNAMIC DONOR LOGIC ---
+        const dEmail = document.getElementById('donorEmail');
+        const dName = document.getElementById('donorName');
+        const dPhone = document.getElementById('donorPhone');
+        const donateBtn = document.getElementById('donateBtn');
 
-        amountOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                amountOptions.forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                selectedAmount = parseInt(option.dataset.amount);
-                customAmountInput.value = '';
-            });
-        });
-
-        customAmountInput.addEventListener('input', () => {
-            if (customAmountInput.value) {
-                amountOptions.forEach(o => o.classList.remove('selected'));
-                selectedAmount = parseInt(customAmountInput.value) || 0;
+        // 1. Function to handle auto-disabling
+        function updateFieldStates() {
+            if (dEmail.value.trim() !== "") {
+                // If email is filled (either by session or guest typing), check for name/phone
+                if (dName.value.trim() !== "") dName.disabled = true;
+                if (dPhone.value.trim() !== "") dPhone.disabled = true;
             }
-        });
+        }
 
-        // Form Validation
-        const donorNameInput = document.getElementById('donorName');
-        const donorPhoneInput = document.getElementById('donorPhone');
-        const donorEmailInput = document.getElementById('donorEmail');
-
-        function validateForm() {
-            let isValid = true;
-
-            // Name validation
-            const name = donorNameInput.value.trim();
-            const nameError = document.getElementById('nameError');
-            if (!name) {
-                donorNameInput.classList.add('error');
-                nameError.classList.add('show');
-                isValid = false;
-            } else {
-                donorNameInput.classList.remove('error');
-                nameError.classList.remove('show');
-            }
-
-            // Phone validation
-            const phone = donorPhoneInput.value.trim();
-            const phoneError = document.getElementById('phoneError');
-            const phoneRegex = /^[6-9]\d{9}$/;
-            if (!phone || !phoneRegex.test(phone)) {
-                donorPhoneInput.classList.add('error');
-                phoneError.classList.add('show');
-                isValid = false;
-            } else {
-                donorPhoneInput.classList.remove('error');
-                phoneError.classList.remove('show');
-            }
-
-            // Email validation
-            const email = donorEmailInput.value.trim();
-            const emailError = document.getElementById('emailError');
+        // 2. Fetch details for guest users on email input
+        dEmail.addEventListener('blur', async () => {
+            const email = dEmail.value.trim();
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!email || !emailRegex.test(email)) {
-                donorEmailInput.classList.add('error');
-                emailError.classList.add('show');
-                isValid = false;
-            } else {
-                donorEmailInput.classList.remove('error');
-                emailError.classList.remove('show');
+            
+            if (emailRegex.test(email) && dEmail.disabled === false) {
+                const formData = new FormData();
+                formData.append('email', email);
+
+                try {
+                    const res = await fetch('actions/donate/check_donor.php', { method: 'POST', body: formData });
+                    const data = await res.json();
+
+                    if (data.status === 'found') {
+                        if (data.name) {
+                            dName.value = data.name;
+                            dName.disabled = true;
+                        }
+                        if (data.phone) {
+                            dPhone.value = data.phone;
+                            dPhone.disabled = true;
+                        } else {
+                            dPhone.disabled = false; // Compulsory to fill if missing
+                            dPhone.focus();
+                        }
+                    } else {
+                        // New user - allow filling everything
+                        dName.disabled = false;
+                        dPhone.disabled = false;
+                    }
+                } catch (e) { console.error("Verify error"); }
             }
-
-            return isValid;
-        }
-
-        // Clear error on input
-        donorNameInput.addEventListener('input', () => { donorNameInput.classList.remove('error'); document.getElementById('nameError').classList.remove('show'); });
-        donorPhoneInput.addEventListener('input', () => { donorPhoneInput.classList.remove('error'); document.getElementById('phoneError').classList.remove('show'); });
-        donorEmailInput.addEventListener('input', () => { donorEmailInput.classList.remove('error'); document.getElementById('emailError').classList.remove('show'); });
-
-        // Donation Modal
-        const donationModal = document.getElementById('donationModal');
-
-        document.getElementById('donateBtn').addEventListener('click', () => {
-            if (selectedAmount < 100) { alert('Minimum donation amount is ₹100'); return; }
-            if (!validateForm()) return;
-
-            document.getElementById('modalAmount').textContent = '₹' + selectedAmount.toLocaleString('en-IN');
-            document.getElementById('modalDonorName').textContent = donorNameInput.value.trim();
-            document.getElementById('modalDonorPhone').textContent = donorPhoneInput.value.trim();
-            document.getElementById('modalDonorEmail').textContent = donorEmailInput.value.trim();
-            document.getElementById('modalCampaignId').textContent = campaign.campaignId;
-            donationModal.classList.add('show');
         });
 
-        document.getElementById('closeModal').addEventListener('click', () => donationModal.classList.remove('show'));
-        donationModal.addEventListener('click', (e) => { if (e.target === donationModal) donationModal.classList.remove('show'); });
+        // 3. Final Validation on Click
+        donateBtn.addEventListener('click', () => {
+            let isValid = true;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRegex = /^[6-9]\d{9}$/;
 
-        // Share Functions
-        const shareUrl = window.location.href;
-        const shareText = `Help support ${campaign.title} (${campaign.campaignId}). Every contribution makes a difference!`;
+            // Reset errors
+            document.querySelectorAll('.form-error').forEach(e => e.style.display = 'none');
 
-        function shareWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank'); }
-        function shareTwitter() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank'); }
-        function shareFacebook() { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank'); }
-        function shareInstagram() {
-            // Instagram doesn't support direct URL sharing, so copy link and notify
-            navigator.clipboard.writeText(shareText + ' ' + shareUrl).then(() => {
-                alert('Link copied! Open Instagram and paste it in your story or DM to share.');
-            });
-        }
-        function copyLink() { navigator.clipboard.writeText(shareUrl).then(() => alert('Link copied to clipboard!')); }
+            if (!emailRegex.test(dEmail.value)) {
+                document.getElementById('emailError').style.display = 'block';
+                isValid = false;
+            }
+            if (dName.value.trim().length < 2) {
+                document.getElementById('nameError').style.display = 'block';
+                isValid = false;
+            }
+            if (!phoneRegex.test(dPhone.value)) {
+                document.getElementById('phoneError').style.display = 'block';
+                isValid = false;
+            }
 
-        const categoryIcons = { 'Education': '📚', 'Medical': '🏥', 'Health': '💚', 'Disaster': '🆘', 'Community': '🤝' };
-        function formatCurrency(amount) { return '₹' + amount.toLocaleString('en-IN'); }
-        function formatDate(dateStr) { return new Date(dateStr).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }); }
+            if (isValid) {
+                const amt = parseFloat(document.getElementById('customAmount').value);
+                const remainingGoal = <?php echo $remaining; ?>; // This variable already exists in your PHP header
 
-        function updatePage() {
-            document.getElementById('campaignTitle').textContent = campaign.title;
-            document.getElementById('campaignIdBadge').textContent = 'ID: ' + campaign.campaignId;
-            document.getElementById('categoryBadge').innerHTML = `${categoryIcons[campaign.category] || '📋'} ${campaign.category}`;
-            document.getElementById('campaignDate').textContent = formatDate(campaign.date);
-            document.getElementById('daysLeft').textContent = campaign.daysLeft;
-            document.getElementById('campaignLocation').textContent = campaign.location;
+                if (!amt || amt < 100) {
+                    alert("Minimum donation is ₹100");
+                    return;
+                }
 
-            const urgentBadge = document.getElementById('urgentBadge');
-            if (campaign.completed) { urgentBadge.className = 'badge completed'; urgentBadge.textContent = '✓ Completed'; }
-            else if (campaign.urgent) { urgentBadge.className = 'badge urgent'; urgentBadge.textContent = '🔥 Urgent'; }
-            else { urgentBadge.style.display = 'none'; }
+                // --- NEW CHECK ---
+                if (amt > remainingGoal) {
+                    alert(`The goal is nearly reached! Please enter an amount equal to or less than ₹${remainingGoal.toLocaleString('en-IN')}.`);
+                    document.getElementById('customAmount').value = remainingGoal; // Optional: auto-fill with max possible
+                    return;
+                }
 
-            const percent = Math.round((campaign.raised / campaign.goal) * 100);
-            document.getElementById('raisedAmount').textContent = formatCurrency(campaign.raised);
-            document.getElementById('goalAmount').textContent = formatCurrency(campaign.goal);
-            document.getElementById('progressBar').style.width = Math.min(percent, 100) + '%';
-            document.getElementById('donorCount').textContent = campaign.donors;
-            document.getElementById('daysLeftStat').textContent = campaign.daysLeft;
-            document.getElementById('percentFunded').textContent = percent + '%';
-            document.getElementById('totalDonors').textContent = `${campaign.donors} people have donated`;
-            document.getElementById('organizerName').textContent = campaign.organizer.name;
-            document.getElementById('organizerInitial').textContent = campaign.organizer.name.charAt(0);
+                donateBtn.disabled = true;
+                donateBtn.innerHTML = "Processing...";
 
-            document.getElementById('beneficiaryName').textContent = campaign.beneficiary.name;
-            document.getElementById('beneficiaryContact').textContent = campaign.beneficiary.contact;
-            document.getElementById('beneficiaryCity').textContent = campaign.beneficiary.city;
-        }
+                const formData = new FormData();
+                formData.append('campaign_id', campaignId);
+                formData.append('amount', amt);
+                formData.append('email', dEmail.value.trim());
+                formData.append('name', dName.value.trim());
+                formData.append('phone', dPhone.value.trim());
 
-        updatePage();
+                // Replace the current fetch block inside donateBtn.addEventListener with this:
+
+                fetch('actions/donate/process_donation.php', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // 1. Populate Modal with Form Values
+                        document.getElementById('modalAmount').textContent = '₹' + amt.toLocaleString('en-IN');
+                        document.getElementById('modalDonorName').textContent = dName.value.trim();
+                        document.getElementById('modalDonorPhone').textContent = dPhone.value.trim();
+                        document.getElementById('modalDonorEmail').textContent = dEmail.value.trim();
+                        
+                        // 2. Populate Campaign Reference ID (Format: SAH-YYYY-ID)
+                        const campaignRef = "SAH-2026-" + campaignId.toString().padStart(3, '0');
+                        document.getElementById('modalCampaignId').textContent = campaignRef;
+
+                        // 3. Populate Donation ID from Server Response
+                        // Note: You need to add <span id="modalDonationId"></span> in your HTML modal to see this
+                        const donIdEl = document.getElementById('modalDonationId');
+                        if (donIdEl) {
+                            donIdEl.textContent = "#DON-" + data.donation_id;
+                        }
+
+                        // 4. Show Modal
+                        document.getElementById('donationModal').classList.add('show');
+                    } else {
+                        alert(data.message);
+                        donateBtn.disabled = false;
+                        donateBtn.innerHTML = "Donate Now";
+                    }
+                })
+                .catch(err => {
+                    alert("Server connection failed.");
+                    donateBtn.disabled = false;
+                    donateBtn.innerHTML = "Donate Now";
+                });
+            }
+        });
+
+        // Run on init for logged in users
+        updateFieldStates();
+
+        // Slider controls (keep your existing prev/next button logic)
     </script>
 </body>
 </html>
