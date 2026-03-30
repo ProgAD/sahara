@@ -1181,298 +1181,199 @@ $current_page = "all-campaigns.php";
     <?php include 'includes/footer.php'; ?>
 
     <script>
-        // Campaign Data (Extended)
-        const campaigns = [
-            { id: 1, title: "Education Support for Rural Students", desc: "Help underprivileged students access quality education materials and online resources.", category: "Education", raised: 125000, goal: 200000, donors: 189, urgent: false, completed: false, daysLeft: 15, date: "2026-03-15", img: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500" },
-            { id: 2, title: "Medical Emergency – Rahul's Surgery", desc: "Rahul needs urgent spinal surgery. Help us raise funds for his treatment and recovery.", category: "Medical", raised: 420000, goal: 500000, donors: 312, urgent: true, completed: false, daysLeft: 5, date: "2026-03-25", img: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=500" },
-            { id: 3, title: "Laptop Fund for Merit Students", desc: "Providing laptops to academically excellent students who cannot afford devices.", category: "Education", raised: 180000, goal: 300000, donors: 167, urgent: false, completed: false, daysLeft: 22, date: "2026-03-10", img: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500" },
-            { id: 4, title: "Mental Health Support Initiative", desc: "Funding counseling sessions and mental health resources for students.", category: "Health", raised: 78000, goal: 120000, donors: 98, urgent: false, completed: false, daysLeft: 30, date: "2026-03-05", img: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=500" },
-            { id: 5, title: "Flood Relief – Kerala Students", desc: "Emergency support for BS students affected by floods in Kerala.", category: "Disaster", raised: 340000, goal: 400000, donors: 423, urgent: true, completed: false, daysLeft: 3, date: "2026-03-28", img: "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=500" },
-            { id: 6, title: "Community Library Project", desc: "Building a community library with study spaces and internet access.", category: "Community", raised: 65000, goal: 250000, donors: 87, urgent: false, completed: false, daysLeft: 45, date: "2026-02-20", img: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=500" },
-            { id: 7, title: "Scholarship for Single Parent Kids", desc: "Providing educational support to children from single-parent households.", category: "Education", raised: 200000, goal: 200000, donors: 234, urgent: false, completed: true, daysLeft: 0, date: "2026-01-15", img: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500" },
-            { id: 8, title: "Cancer Treatment – Meera's Fight", desc: "Help Meera, a BS student, fight breast cancer with proper treatment.", category: "Medical", raised: 800000, goal: 800000, donors: 567, urgent: false, completed: true, daysLeft: 0, date: "2026-02-01", img: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500" },
-            { id: 9, title: "Women Safety Workshop Series", desc: "Conducting self-defense and safety awareness workshops for women students.", category: "Community", raised: 45000, goal: 80000, donors: 56, urgent: false, completed: false, daysLeft: 20, date: "2026-03-18", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=500" },
-            { id: 10, title: "Earthquake Relief – Nepal Students", desc: "Supporting students affected by the recent earthquake in Nepal border regions.", category: "Disaster", raised: 150000, goal: 150000, donors: 198, urgent: false, completed: true, daysLeft: 0, date: "2026-01-28", img: "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=500" },
-            { id: 11, title: "Vision Care Program", desc: "Providing free eye checkups and spectacles to students in need.", category: "Health", raised: 92000, goal: 150000, donors: 123, urgent: false, completed: false, daysLeft: 18, date: "2026-03-12", img: "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=500" },
-            { id: 12, title: "Tech Skills Bootcamp", desc: "Free coding and digital literacy bootcamp for underprivileged students.", category: "Education", raised: 120000, goal: 120000, donors: 145, urgent: false, completed: true, daysLeft: 0, date: "2026-02-10", img: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=500" }
-        ];
-
-        // State
+        // --- State Management ---
         let currentFilter = 'all';
         let currentSort = 'newest';
         let searchQuery = '';
         let currentPage = 1;
         const itemsPerPage = 9;
+        let allLoadedCampaigns = []; // Stores the current filtered set
 
-        // DOM Elements
-        const campaignsGrid = document.getElementById('campaignsGrid');
-        const emptyState = document.getElementById('emptyState');
-        const pagination = document.getElementById('pagination');
-        const searchInput = document.getElementById('searchInput');
-        const sortSelect = document.getElementById('sortSelect');
-        const categorySelect = document.getElementById('categorySelect');
-        const filterTags = document.querySelectorAll('.filter-tag');
+        // --- 1. DATA FETCHING ---
+        async function loadCampaigns() {
+            const grid = document.getElementById('campaignsGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Construct the API URL with query parameters
+            const params = new URLSearchParams({
+                category: currentFilter,
+                sort: currentSort,
+                search: searchQuery
+            });
 
-        // Filter Campaigns
-        function getFilteredCampaigns() {
-            let filtered = [...campaigns];
+            try {
+                const response = await fetch(`actions/campaigns/fetch_all.php?${params.toString()}`);
+                const data = await response.json();
+                
+                allLoadedCampaigns = data.campaigns || [];
+                updateStatsBar(data.stats);
 
-            // Category filter
-            if (currentFilter !== 'all') {
-                filtered = filtered.filter(c => c.category === currentFilter);
+                if (allLoadedCampaigns.length === 0) {
+                    grid.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    document.getElementById('pagination').innerHTML = '';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                renderCurrentPage();
+            } catch (error) {
+                console.error("Error fetching campaigns:", error);
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color: var(--error); padding: 3rem;">Unable to load campaigns. Please refresh the page.</p>`;
             }
-
-            // Search filter
-            if (searchQuery) {
-                const query = searchQuery.toLowerCase();
-                filtered = filtered.filter(c => 
-                    c.title.toLowerCase().includes(query) || 
-                    c.desc.toLowerCase().includes(query) ||
-                    c.category.toLowerCase().includes(query)
-                );
-            }
-
-            // Sort
-            switch(currentSort) {
-                case 'newest':
-                    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    break;
-                case 'urgent':
-                    filtered.sort((a, b) => b.urgent - a.urgent || a.daysLeft - b.daysLeft);
-                    break;
-                case 'mostFunded':
-                    filtered.sort((a, b) => (b.raised/b.goal) - (a.raised/a.goal));
-                    break;
-                case 'leastFunded':
-                    filtered.sort((a, b) => (a.raised/a.goal) - (b.raised/b.goal));
-                    break;
-                case 'ending':
-                    filtered.sort((a, b) => {
-                        if (a.completed && !b.completed) return 1;
-                        if (!a.completed && b.completed) return -1;
-                        return a.daysLeft - b.daysLeft;
-                    });
-                    break;
-            }
-
-            return filtered;
         }
 
-        // Render Campaigns
-        function renderCampaigns() {
-            const filtered = getFilteredCampaigns();
-            const totalPages = Math.ceil(filtered.length / itemsPerPage);
+        // --- 2. RENDERING LOGIC ---
+        function renderCurrentPage() {
+            const grid = document.getElementById('campaignsGrid');
+            const totalPages = Math.ceil(allLoadedCampaigns.length / itemsPerPage);
+            
+            // Calculate slice for current page
             const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pageItems = filtered.slice(start, end);
+            const pageItems = allLoadedCampaigns.slice(start, start + itemsPerPage);
 
-            if (filtered.length === 0) {
-                campaignsGrid.innerHTML = '';
-                emptyState.style.display = 'block';
-                pagination.innerHTML = '';
-                return;
-            }
+            grid.innerHTML = pageItems.map(c => {
+                const raised = parseFloat(c.raised || 0);
+                const goal = parseFloat(c.amount_needed || 0);
+                const pct = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
+                const isCompleted = c.status === 'completed' || pct >= 100;
+                const isUrgent = c.urgency === 'high' && !isCompleted;
 
-            emptyState.style.display = 'none';
-
-            campaignsGrid.innerHTML = pageItems.map(c => {
-                const pct = Math.round((c.raised / c.goal) * 100);
-                const isCompleted = c.completed || pct >= 100;
-                
                 return `
-                <article class="campaign-card">
-                    <div class="campaign-img">
-                        <img src="${c.img}" alt="${c.title}" loading="lazy">
-                        <span class="campaign-tag">${c.category}</span>
-                        ${c.urgent && !isCompleted ? '<span class="campaign-urgent">Urgent</span>' : ''}
-                        ${isCompleted ? '<span class="campaign-status completed">Funded</span>' : `<span class="campaign-status active">Active</span>`}
-                    </div>
-                    <div class="campaign-body">
-                        <h3 class="campaign-title">${c.title}</h3>
-                        <p class="campaign-desc">${c.desc}</p>
-                        <div class="campaign-meta">
-                            <span>
-                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                ${isCompleted ? 'Completed' : `${c.daysLeft} days left`}
-                            </span>
-                            <span>
-                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                ${c.donors} donors
+                <a href="campaign.php?id=${c.id}" target="_blank" style="text-decoration: none; display: block;">
+                    <article class="campaign-card">
+                        <div class="campaign-img">
+                            <img src="${c.img}" alt="${c.title}" onerror="this.src='https://images.unsplash.com/photo-1532629345422-7515f3d16bb8?w=500'">
+                            <span class="campaign-tag">${c.category}</span>
+                            ${isUrgent ? '<span class="campaign-urgent">Urgent</span>' : ''}
+                            <span class="campaign-status ${isCompleted ? 'completed' : 'active'}">
+                                ${isCompleted ? 'Funded' : 'Active'}
                             </span>
                         </div>
-                        <div class="campaign-progress">
-                            <div class="progress-track"><div class="progress-bar ${isCompleted ? 'completed' : ''}" style="width:${Math.min(pct, 100)}%"></div></div>
-                            <div class="progress-info">
-                                <span class="progress-raised ${isCompleted ? 'completed' : ''}">₹${(c.raised/1000).toFixed(0)}K</span>
-                                <span class="progress-goal">of ₹${(c.goal/1000).toFixed(0)}K (${pct}%)</span>
+                        <div class="campaign-body">
+                            <h3 class="campaign-title">${c.title}</h3>
+                            <p class="campaign-desc">${c.description}</p>
+                            <div class="campaign-meta">
+                                <span>🕒 ${isCompleted ? 'Goal Reached' : 'Ongoing'}</span>
+                                <span>👥 ${c.donor_count || 0} donors</span>
                             </div>
-                        </div>
-                        <div class="campaign-footer">
-                            <div class="donors">
-                                <div class="donor-avatars">
-                                    <div class="donor-avatar">A</div>
-                                    <div class="donor-avatar">S</div>
-                                    <div class="donor-avatar">P</div>
+                            <div class="campaign-progress">
+                                <div class="progress-track"><div class="progress-bar ${isCompleted ? 'completed' : ''}" style="width:${pct}%"></div></div>
+                                <div class="progress-info">
+                                    <span class="progress-raised ${isCompleted ? 'completed' : ''}">₹${raised.toLocaleString('en-IN')}</span>
+                                    <span class="progress-goal">of ₹${goal.toLocaleString('en-IN')} (${pct}%)</span>
                                 </div>
-                                <span class="donor-count">+${c.donors - 3}</span>
                             </div>
-                            ${isCompleted 
-                                ? '<button class="btn-view" onclick="viewCampaign(' + c.id + ')">View Details</button>'
-                                : '<button class="btn btn-sun btn-donate" onclick="donate(' + c.id + ')">Donate</button>'
-                            }
+                            <div class="campaign-footer">
+                                <button class="${isCompleted ? 'btn-view' : 'btn btn-sun btn-donate'}" style="width: 100%; text-align: center; pointer-events: none;">
+                                    ${isCompleted ? 'View Impact' : 'Donate Now'}
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </article>`;
+                    </article>
+                </a>`;
             }).join('');
 
-            // Render Pagination
             renderPagination(totalPages);
         }
 
-        // Render Pagination
-        function renderPagination(totalPages) {
-            if (totalPages <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
-
-            let html = `
-                <button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-            `;
-
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                    html += `<button class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
-                } else if (i === currentPage - 2 || i === currentPage + 2) {
-                    html += `<button disabled>...</button>`;
-                }
-            }
-
-            html += `
-                <button ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                </button>
-            `;
-
-            pagination.innerHTML = html;
-        }
-
-        // Change Page
-        function changePage(page) {
-            currentPage = page;
-            renderCampaigns();
-            window.scrollTo({ top: document.querySelector('.campaigns-section').offsetTop - 150, behavior: 'smooth' });
-        }
-
-        // Update Stats
-        function updateStats() {
-            const total = campaigns.length;
-            const active = campaigns.filter(c => !c.completed).length;
-            const completed = campaigns.filter(c => c.completed).length;
-            const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
-
-            document.getElementById('totalCampaigns').textContent = total;
-            document.getElementById('activeCampaigns').textContent = active;
-            document.getElementById('completedCampaigns').textContent = completed;
-            document.getElementById('totalRaised').textContent = `₹${(totalRaised/100000).toFixed(1)}L`;
-        }
-
-        // Donate
-        function donate(id) {
-            alert(`Redirecting to secure payment for Campaign #${id}\n\n(Integrates with Razorpay/PayU in production)`);
-        }
-
-        // View Campaign
-        function viewCampaign(id) {
-            alert(`Opening details for Campaign #${id}\n\n(Campaign detail page coming soon)`);
-        }
-
-        // Reset Filters
-        function resetFilters() {
-            currentFilter = 'all';
-            searchQuery = '';
-            currentSort = 'newest';
-            currentPage = 1;
+        function updateStatsBar(stats) {
+            if (!stats) return;
+            document.getElementById('totalCampaigns').textContent = stats.total || 0;
+            document.getElementById('activeCampaigns').textContent = stats.active || 0;
+            document.getElementById('completedCampaigns').textContent = stats.completed || 0;
             
-            searchInput.value = '';
-            sortSelect.value = 'newest';
-            categorySelect.value = 'all';
-            filterTags.forEach(tag => {
-                tag.classList.toggle('active', tag.dataset.filter === 'all');
-            });
-            
-            renderCampaigns();
+            const raised = parseFloat(stats.total_raised || 0);
+            document.getElementById('totalRaised').textContent = raised >= 100000 
+                ? `₹${(raised/100000).toFixed(1)}L` 
+                : `₹${raised.toLocaleString('en-IN')}`;
         }
 
-        // Sync filter state between desktop tags and mobile dropdown
+        // --- 3. FILTER & UI CONTROLS ---
         function setFilter(filter) {
             currentFilter = filter;
             currentPage = 1;
             
-            // Sync desktop filter tags
-            filterTags.forEach(tag => {
+            // Update Tags UI
+            document.querySelectorAll('.filter-tag').forEach(tag => {
                 tag.classList.toggle('active', tag.dataset.filter === filter);
             });
             
-            // Sync mobile dropdown
-            categorySelect.value = filter;
+            // Update Select UI
+            document.getElementById('categorySelect').value = filter;
             
-            renderCampaigns();
+            loadCampaigns();
         }
 
-        // Event Listeners - Desktop Filter Tags
-        filterTags.forEach(tag => {
-            tag.addEventListener('click', () => {
-                setFilter(tag.dataset.filter);
-            });
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            setFilter('all');
+        }
+
+        // --- 4. PAGINATION ---
+        function renderPagination(totalPages) {
+            const nav = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                nav.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+            nav.innerHTML = html;
+        }
+
+        window.changePage = function(page) {
+            currentPage = page;
+            renderCurrentPage();
+            window.scrollTo({ top: 450, behavior: 'smooth' });
+        };
+
+        // --- 5. EVENT LISTENERS ---
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            currentPage = 1;
+            // Optional: debounce this if you have thousands of records
+            loadCampaigns();
         });
 
-        // Event Listener - Mobile Category Dropdown
-        categorySelect.addEventListener('change', (e) => {
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            currentPage = 1;
+            loadCampaigns();
+        });
+
+        document.getElementById('categorySelect').addEventListener('change', (e) => {
             setFilter(e.target.value);
         });
 
-        searchInput.addEventListener('input', (e) => {
-            searchQuery = e.target.value;
-            currentPage = 1;
-            renderCampaigns();
+        document.querySelectorAll('.filter-tag').forEach(tag => {
+            tag.addEventListener('click', () => setFilter(tag.dataset.filter));
         });
 
-        sortSelect.addEventListener('change', (e) => {
-            currentSort = e.target.value;
-            currentPage = 1;
-            renderCampaigns();
-        });
-
-        // Mobile Menu
+        // Mobile Menu Toggle
         const menuToggle = document.getElementById('menuToggle');
         const mobileNav = document.getElementById('mobileNav');
-
-        menuToggle.addEventListener('click', () => {
-            menuToggle.classList.toggle('active');
-            mobileNav.classList.toggle('active');
-            document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
-        });
-
-        document.querySelectorAll('[data-close]').forEach(link => {
-            link.addEventListener('click', () => {
-                menuToggle.classList.remove('active');
-                mobileNav.classList.remove('active');
-                document.body.style.overflow = '';
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => {
+                menuToggle.classList.toggle('active');
+                mobileNav.classList.toggle('active');
+                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
             });
-        });
+        }
 
         // Header Scroll
-        const header = document.getElementById('header');
         window.addEventListener('scroll', () => {
-            header.classList.toggle('scrolled', window.scrollY > 50);
+            const header = document.getElementById('header');
+            if (header) header.classList.toggle('scrolled', window.scrollY > 50);
         });
 
-        // Init
-        updateStats();
-        renderCampaigns();
+        // --- INITIALIZE ---
+        document.addEventListener('DOMContentLoaded', loadCampaigns);
+
     </script>
 </body>
 </html>

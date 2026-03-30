@@ -1441,30 +1441,32 @@ $current_page = "index.php";
                     const isUrgent = c.urgency === 'high' || c.urgency === 'critical';
 
                     return `
-                    <article class="campaign-card">
-                        <div class="campaign-img">
-                            <img src="${c.img}" alt="${c.title}" loading="lazy">
-                            <span class="campaign-tag">${c.category}</span>
-                            ${isUrgent ? '<span class="campaign-urgent">Urgent</span>' : ''}
-                        </div>
-                        <div class="campaign-body">
-                            <h3 class="campaign-title">${c.title}</h3>
-                            <p class="campaign-desc">${c.description}</p>
-                            <div class="campaign-progress">
-                                <div class="progress-track"><div class="progress-bar" style="width:${pct}%"></div></div>
-                                <div class="progress-info">
-                                    <span class="progress-raised">₹${raised.toLocaleString('en-IN')}</span>
-                                    <span class="progress-goal">of ₹${goal.toLocaleString('en-IN')}</span>
+                    <a href="campaign.php?id=${c.id}" target="_blank" style="text-decoration: none; display: block;">
+                        <article class="campaign-card">
+                            <div class="campaign-img">
+                                <img src="${c.img}" alt="${c.title}" loading="lazy">
+                                <span class="campaign-tag">${c.category}</span>
+                                ${isUrgent ? '<span class="campaign-urgent">Urgent</span>' : ''}
+                            </div>
+                            <div class="campaign-body">
+                                <h3 class="campaign-title">${c.title}</h3>
+                                <p class="campaign-desc">${c.description}</p>
+                                <div class="campaign-progress">
+                                    <div class="progress-track"><div class="progress-bar" style="width:${pct}%"></div></div>
+                                    <div class="progress-info">
+                                        <span class="progress-raised">₹${raised.toLocaleString('en-IN')}</span>
+                                        <span class="progress-goal">of ₹${goal.toLocaleString('en-IN')}</span>
+                                    </div>
+                                </div>
+                                <div class="campaign-footer">
+                                    <div class="donors">
+                                        <span class="donor-count">${c.donor_count || 0} donors</span>
+                                    </div>
+                                    <button class="btn btn-sun btn-donate" style="pointer-events: none;">Donate</button>
                                 </div>
                             </div>
-                            <div class="campaign-footer">
-                                <div class="donors">
-                                    <span class="donor-count">${c.donor_count || 0} donors</span>
-                                </div>
-                                <a href="campaign-details.php?id=${c.id}" class="btn btn-sun btn-donate">Donate</a>
-                            </div>
-                        </div>
-                    </article>`;
+                        </article>
+                    </a>`;
                 }).join('');
 
             } catch (error) {
