@@ -21,17 +21,21 @@ if ($id <= 0) {
 $query = "SELECT c.*, u.name as organizer_name, u.role as organizer_role, u.created_at as organizer_since 
           FROM campaigns c 
           JOIN users u ON c.user_id = u.id 
-          WHERE c.id = ? AND c.delete_flag = 0 AND c.status != 'pending' LIMIT 1";
+          WHERE c.id = ? AND c.delete_flag = 0 LIMIT 1";
+        //   $query = "SELECT c.*, u.name as organizer_name, u.role as organizer_role, u.created_at as organizer_since 
+        //   FROM campaigns c 
+        //   JOIN users u ON c.user_id = u.id 
+        //   WHERE c.id = ? AND c.delete_flag = 0 AND c.status != 'pending' LIMIT 1";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $campaign = $stmt->get_result()->fetch_assoc();
 
 // 3. Handle "Not Found"
-if (!$campaign) {
-    echo "<div style='text-align:center; padding:100px; font-family:sans-serif;'><h1>Campaign Not Found</h1><a href='all-campaigns.php'>Back to Campaigns</a></div>";
-    exit;
-}
+// if (!$campaign) {
+//     echo "<div style='text-align:center; padding:100px; font-family:sans-serif;'><h1>Campaign Not Found</h1><a href='all-campaigns.php'>Back to Campaigns</a></div>";
+//     exit;
+// }
 
 
 // campaign variables 
