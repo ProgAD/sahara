@@ -17,7 +17,7 @@
 - [Workflow](#workflow)
 - [Responsive Breakpoints](#responsive-breakpoints)
 - [Browser Support](#browser-support)
-- [License](#license)
+- [License](#license) 
 
 ---
 
