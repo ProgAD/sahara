@@ -1,5 +1,11 @@
 # 🌞 SAHARA — Fundraising Platform
 
+**Live Demo**: [https://adityawork.live](https://adityawork.live)  
+Admin credentials  
+- Email: `admin@gmail.com`  
+- Password: `23456789`
+
+
 **SAHARA** (IIT Madras BS Degree Social Welfare Society) is a web-based fundraising platform that enables students and community members to create, manage, and contribute to fundraising campaigns. The platform features a public-facing website for browsing and donating, a user dashboard for managing personal campaigns and donations, and a full-featured admin panel for reviewing and approving submissions.
 
 ---
@@ -16,8 +22,6 @@
 - [Setup & Installation](#setup--installation)
 - [Workflow](#workflow)
 - [Responsive Breakpoints](#responsive-breakpoints)
-- [Browser Support](#browser-support)
-- [License](#license) 
 
 ---
 
@@ -302,27 +306,5 @@ Visitor fills donate form on campaign page → Status: PENDING
 
 ---
 
-## Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-- Mobile Safari (iOS 14+)
-- Chrome Mobile (Android 10+)
-
----
-
-## License
-
-This project is built for **SAHARA — IIT Madras BS Degree Social Welfare Society**. All rights reserved.
-
----
-
-## Contributors
-
-- **Tabish Shaikh** — Project Lead, Design & Development
-
----
 
 > Built with ❤️ for social welfare
