@@ -12,6 +12,11 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Default admin (password: 12345678)
+INSERT INTO users (name, email, password, role)
+VALUES ('Admin', 'admin@gmail.com', '$2y$10$0UaM5b59jPQI0H/2V2D9IeXTgFO8PwkLTzQebYa62EbcfoJp0CKTi', 'admin')
+ON DUPLICATE KEY UPDATE id=id;
+
 -- ============================================================
 -- Fundraising Posts Table
 -- ============================================================
