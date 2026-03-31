@@ -1,8 +1,8 @@
-# 🌞 SAHARA — Fundraising Platform
+# SAHARA — Fundraising Platform
 
-**Live Demo**: [https://adityawork.live](https://adityawork.live)  
-Admin credentials  
-- Email: `admin@gmail.com`  
+**Live Demo**: [https://adityawork.live](https://adityawork.live)
+Admin credentials
+- Email: `admin@gmail.com`
 - Password: `23456789`
 
 
@@ -10,7 +10,7 @@ Admin credentials
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Tech Stack](#tech-stack)
 - [Features Overview](#features-overview)
@@ -31,7 +31,7 @@ Admin credentials
 - **Backend**: PHP
 - **Database**: MySQL
 - **Icons**: Inline SVGs (no icon libraries)
-- **Email**: Gmail SMTP
+- **Email**: PHPMailer (Gmail SMTP)
 
 ---
 
@@ -43,15 +43,19 @@ Admin credentials
 - Campaign listing page with filters and search
 - Fundraise request form with multi-step validation, file uploads, email verification, and review flow
 
+### Auth Pages
+- Login page with email and password
+- Signup page for new user registration
+
 ### User Dashboard
 - My Campaigns tab — view submitted campaigns and their status
 - My Donations tab — track donation history
 - Profile & Settings tab — upload profile photo, edit phone number, change password with strength meter
 
 ### Admin Panel
-- Dashboard with 5 stat cards, recent fundraise requests table, recent donations table, and activity timeline
-- Fundraise Requests page — full table with S.No., timeline (submitted/approved/paused/rejected timestamps), status dropdown with confirmation popup, view + delete actions, search/filter/sort, pagination (8 per page)
-- Donation Requests page — full table with S.No., date, donor, phone, email, campaign, amount, status dropdown with confirmation popup, trash action, search/sort, pagination (8 per page)
+- Dashboard with stat cards, recent fundraise requests table, recent donations table, and activity timeline
+- Fundraise Requests page — full table with S.No., timeline (submitted/approved/paused/rejected timestamps), status dropdown with confirmation popup, view + delete actions, search/filter/sort, pagination
+- Donation Requests page — full table with S.No., date, donor, phone, email, campaign, amount, status dropdown with confirmation popup, trash action, search/sort, pagination
 - Settings page — change password with live strength meter and match validation
 
 ---
@@ -60,16 +64,18 @@ Admin credentials
 
 | File | Description |
 |------|-------------|
-| `index.html` | Homepage — hero, campaigns grid, impact section, footer |
-| `campaigns.html` | Campaign listing with filters (referenced as navigation target) |
-| `campaign-details.html` | Individual campaign page — progress, donate modal, share, beneficiary |
-| `fundraise.html` | Fundraise request form — email verification gate, multi-section form, file upload with progress, review & submit flow |
-| `dashboard.html` | User dashboard — My Campaigns, My Donations, Profile & Settings tabs |
-| `admin-dashboard.html` | Admin overview — stats, recent fundraise/donation tables with full controls, activity timeline |
-| `admin-fundraise-requests.html` | Admin fundraise management — S.No., timeline, status dropdown, view/trash, pagination |
-| `admin-donation-requests.html` | Admin donation management — S.No., date, donor details in separate columns, status dropdown, trash, pagination |
-| `admin-settings.html` | Admin settings — change password |
-| `sahara_schema.sql` | MySQL database schema — users, campaigns, donations tables |
+| `index.php` | Homepage — hero, campaigns grid, impact section, footer |
+| `all-campaigns.php` | Campaign listing with filters and search |
+| `campaign.php` | Individual campaign page — progress, donate modal, share, beneficiary |
+| `fundraise-request.php` | Fundraise request form — email verification gate, multi-section form, file upload with progress, review & submit flow |
+| `dashboard.php` | User dashboard — My Campaigns, My Donations, Profile & Settings tabs |
+| `login.html` | User login page |
+| `signup.html` | User registration page |
+| `admin/dashboard.php` | Admin overview — stats, recent fundraise/donation tables, activity timeline |
+| `admin/fundraise-requests.php` | Admin fundraise management — S.No., timeline, status dropdown, view/trash, pagination |
+| `admin/donation-requests.php` | Admin donation management — S.No., date, donor details, status dropdown, trash, pagination |
+| `admin/setting.php` | Admin settings — change password |
+| `sql/schema.sql` | MySQL database schema — users, campaigns, donations tables |
 
 ---
 
@@ -104,7 +110,7 @@ Three tables with file storage handled via filesystem folders:
 | beneficiary_phone | VARCHAR(20) | Optional |
 | beneficiary_relation | VARCHAR(80) | Optional |
 | beneficiary_city | VARCHAR(80) | Optional |
-| urgency | ENUM('low','medium','high','critical') | Default: 'medium' |
+| urgency | ENUM('low','medium','high') | Default: 'medium' |
 | status | ENUM('pending','approved','rejected','paused') | Default: 'pending' |
 | admin_note | TEXT | Optional |
 | views | INT | Default: 0 |
@@ -119,9 +125,10 @@ Three tables with file storage handled via filesystem folders:
 | Column | Type | Notes |
 |--------|------|-------|
 | id | INT AUTO_INCREMENT | Primary key |
-| campaign_id | INT | References campaigns.id |
-| user_id | INT | References users.id |
+| campaign_id | INT | FK → campaigns.id (CASCADE) |
+| user_id | INT | FK → users.id (CASCADE) |
 | amount | DECIMAL(12,2) | Default: 0 |
+| status | ENUM('pending','contacted','confirmed','cancelled') | Default: 'pending' |
 | created_at | DATETIME | Auto |
 | updated_at | DATETIME | Auto on update |
 
@@ -132,20 +139,18 @@ Three tables with file storage handled via filesystem folders:
 No media tables — files stored in filesystem folders:
 
 ```
-/uploads/
+/assets/
 ├── campaigns/
-│   ├── {campaign_id}/        # All images + video for a campaign
-│   │   ├── img1.jpg
-│   │   ├── img2.png
-│   │   └── video.mp4
-│   └── ...
-└── profiles/
-    ├── {user_id}.jpg          # Single profile photo per user
-    └── ...
+│   └── media/
+│       ├── {campaign_id}/        # All images + video for a campaign
+│       │   ├── img1.jpg
+│       │   ├── img2.png
+│       │   └── video.mp4
+│       └── ...
+└── logo.jpg                      # SAHARA logo
 ```
 
-- **Campaign media**: Scan `/uploads/campaigns/{campaign_id}/` to fetch all files
-- **Profile photos**: Direct path `/uploads/profiles/{user_id}.jpg`
+- **Campaign media**: Scan `/assets/campaigns/media/{campaign_id}/` to fetch all files
 
 ---
 
@@ -153,24 +158,50 @@ No media tables — files stored in filesystem folders:
 
 ```
 sahara/
-├── index.html                      # Homepage
-├── campaigns.html                  # Campaign listing
-├── campaign-details.html           # Single campaign page
-├── fundraise.html                  # Fundraise request form
-├── dashboard.html                  # User dashboard
-├── admin-dashboard.html            # Admin main dashboard
-├── admin-fundraise-requests.html   # Admin fundraise management
-├── admin-donation-requests.html    # Admin donation management
-├── admin-settings.html             # Admin settings (password)
-├── sahara_schema.sql               # Database schema
-├── logo.jpg                        # SAHARA logo
-├── uploads/                        # File storage (see above)
+├── index.php                          # Homepage
+├── all-campaigns.php                  # Campaign listing
+├── campaign.php                       # Single campaign page
+├── fundraise-request.php              # Fundraise request form
+├── dashboard.php                      # User dashboard
+├── login.html                         # Login page
+├── signup.html                        # Signup page
+├── admin/
+│   ├── dashboard.php                  # Admin main dashboard
+│   ├── fundraise-requests.php         # Admin fundraise management
+│   ├── donation-requests.php          # Admin donation management
+│   ├── setting.php                    # Admin settings (password)
+│   └── logo.jpg                       # Admin logo
+├── actions/
+│   ├── auth/
+│   │   ├── login_action.php           # Login handler
+│   │   ├── signup_action.php          # Signup handler
+│   │   ├── logout.php                 # Logout handler
+│   │   └── update_user_profile.php    # Profile update handler
+│   ├── admin/
+│   │   ├── dashboard_action.php       # Admin dashboard actions
+│   │   └── settings_action.php        # Admin settings actions
 │   ├── campaigns/
-│   └── profiles/
-└── includes/                       # PHP includes (planned)
-    ├── header.php
-    ├── footer.php
-    └── db.php
+│   │   ├── fetch_active.php           # Fetch active campaigns
+│   │   ├── fetch_all.php              # Fetch all campaigns
+│   │   └── request_action.php         # Campaign request handler
+│   └── donate/
+│       ├── check_donor.php            # Donor verification
+│       └── process_donation.php       # Donation processing
+├── includes/
+│   ├── header.php                     # Public header component
+│   ├── footer.php                     # Public footer component
+│   ├── user_page_init.php             # User session initialization
+│   └── admin/
+│       └── sidebar.php                # Admin sidebar component
+├── assets/
+│   ├── logo.jpg                       # SAHARA logo
+│   └── campaigns/
+│       └── media/                     # Campaign uploads
+├── sql/
+│   └── schema.sql                     # Database schema
+├── config/                            # Database & app config (gitignored)
+├── composer.json                      # PHP dependencies (PHPMailer)
+└── composer.lock
 ```
 
 ---
@@ -223,32 +254,36 @@ sahara/
 ## Setup & Installation
 
 ### Prerequisites
-- Web server with PHP support (Apache/Nginx)
+- XAMPP or similar stack with PHP and MySQL
+- PHP 7.4+ with `mysqli` extension
 - MySQL 5.7+ or MariaDB 10.3+
+- Composer (for PHPMailer)
 - Modern browser (Chrome, Firefox, Safari, Edge)
 
 ### Steps
 
-1. **Clone/download** the project files to your web server root
+1. **Clone/download** the project files to your web server root (e.g. `htdocs/`)
 
-2. **Create the database**:
+2. **Install PHP dependencies**:
+   ```bash
+   composer install
+   ```
+
+3. **Create the database**:
    ```sql
    CREATE DATABASE sahara_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    USE sahara_db;
-   SOURCE sahara_schema.sql;
+   SOURCE sql/schema.sql;
    ```
 
-3. **Create upload directories**:
+4. **Configure database connection** in `config/db.php` (this folder is gitignored)
+
+5. **Create upload directories** (if not present):
    ```bash
-   mkdir -p uploads/campaigns uploads/profiles
-   chmod 755 uploads/campaigns uploads/profiles
+   mkdir -p assets/campaigns/media
    ```
 
-4. **Place the logo** file (`logo.jpg`) in the project root
-
-5. **Open** `index.html` in your browser to view the frontend
-
-> **Note**: All pages currently use sample JavaScript data. Backend PHP integration is planned as the next phase.
+6. **Open** `index.php` in your browser to view the site
 
 ---
 
@@ -307,4 +342,4 @@ Visitor fills donate form on campaign page → Status: PENDING
 ---
 
 
-> Built with ❤️ for social welfare
+> Built with for social welfare
